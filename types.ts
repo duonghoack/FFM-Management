@@ -1,4 +1,4 @@
-export type CalculationType = 'FIXED' | 'RANGE_WEIGHT' | 'TIER_VOLUME' | 'FORMULA' | 'AMAZON_TIER';
+export type CalculationType = 'FIXED' | 'RANGE_WEIGHT' | 'TIER_VOLUME' | 'FORMULA' | 'AMAZON_FBA' | 'SHIPPING_ZONE';
 
 export type ApplyLevel = 'PER_ITEM' | 'PER_ORDER';
 
@@ -8,6 +8,10 @@ export interface Rule {
   price?: number;
   name?: string;
   max_volume?: number;
+  // Shipping Zone specific
+  zone?: string;
+  // Amazon specific
+  tier_name?: string;
   // Dynamic fields
   [key: string]: any;
 }
@@ -48,9 +52,17 @@ export interface CostDetail {
   note: string;
 }
 
-export interface SimulationResult {
+export interface RoutingCandidate {
+  rateCardId: string;
+  vendorName: string;
   totalCost: number;
   details: CostDetail[];
   totalWeight: number;
   totalVolume: number;
+  isPriority?: boolean; // For Owned Warehouse Zone 1
+}
+
+export interface SimulationResult {
+  candidates: RoutingCandidate[];
+  winner: RoutingCandidate | null;
 }

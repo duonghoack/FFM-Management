@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Settings, Plus, LayoutGrid, Calculator } from 'lucide-react';
 import { INITIAL_RATE_CARDS } from './constants';
-import { RateCard } from './types';
+import { RateCard, Component, CalculationType } from './types';
 import ConfigView from './components/ConfigView';
 import SimulatorView from './components/SimulatorView';
 
@@ -14,6 +14,35 @@ export default function App() {
     rateCards.find(rc => rc.id === selectedRateCardId), 
   [rateCards, selectedRateCardId]);
 
+  // --- ACTIONS ---
+
+  const handleAddComponent = (rateCardId: string) => {
+    setRateCards(prevCards => prevCards.map(rc => {
+      if (rc.id !== rateCardId) return rc;
+      
+      const newComponent: Component = {
+        id: `comp_${Date.now()}`,
+        name: 'New Fee Component',
+        type: 'FIXED',
+        apply_level: 'PER_ORDER',
+        price: 0,
+        rules: []
+      };
+
+      return { ...rc, components: [...rc.components, newComponent] };
+    }));
+  };
+
+  const handleDeleteComponent = (rateCardId: string, componentId: string) => {
+    setRateCards(prevCards => prevCards.map(rc => {
+        if (rc.id !== rateCardId) return rc;
+        return { 
+            ...rc, 
+            components: rc.components.filter(c => c.id !== componentId) 
+        };
+    }));
+  };
+
   // Handle updates from ConfigView
   const handleUpdateComponent = (componentId: string, ruleIndex: number | null, field: string, value: any) => {
     if (!activeRateCard) return;
@@ -24,20 +53,78 @@ export default function App() {
       const updatedComponents = rc.components.map(comp => {
         if (comp.id !== componentId) return comp;
         
-        // Update simple field (e.g., fixed price, formula base)
+        // 1. Update Root Property (Name, Type, Apply Level, or simple Fixed Price)
         if (ruleIndex === null) {
-          return { ...comp, [field]: value };
+          const updatedComp = { ...comp, [field]: value };
+
+          // SPECIAL LOGIC: If Type changes, reset rules/defaults to avoid data mismatch
+          if (field === 'type') {
+             const newType = value as CalculationType;
+             updatedComp.rules = [];
+             updatedComp.price = 0;
+             updatedComp.base_price = 0;
+             updatedComp.incremental_price = 0;
+
+             // Add default rules based on type for better UX
+             if (newType === 'RANGE_WEIGHT') {
+                 updatedComp.rules = [{ min: 0, max: 9999, price: 0 }];
+             } else if (newType === 'TIER_VOLUME') {
+                 updatedComp.rules = [{ name: 'Standard Box', max_volume: 1000, price: 0 }];
+             } else if (newType === 'AMAZON_FBA') {
+                 updatedComp.rules = [{ tier_name: 'Small Standard', max: 0.5, price: 0 }];
+             } else if (newType === 'SHIPPING_ZONE') {
+                 updatedComp.rules = [{ zone: '1', min: 0, max: 99, price: 0 }];
+             }
+          }
+
+          return updatedComp;
         } 
         
-        // Update Rule inside array
+        // 2. Update Specific Rule inside array
         const newRules = [...comp.rules];
-        newRules[ruleIndex] = { ...newRules[ruleIndex], [field]: parseFloat(value) };
+        // Handle "Add Rule" (if index is larger than length, though usually handled by button)
+        // Here we assume modification of existing rule
+        if (newRules[ruleIndex]) {
+            newRules[ruleIndex] = { ...newRules[ruleIndex], [field]: parseFloat(value) || value };
+        }
+        
         return { ...comp, rules: newRules };
       });
 
       return { ...rc, components: updatedComponents };
     }));
   };
+
+  // Helper for adding a new rule row
+  const handleAddRule = (componentId: string) => {
+      setRateCards(prevCards => prevCards.map(rc => {
+        if (rc.id !== selectedRateCardId) return rc;
+        const updatedComponents = rc.components.map(comp => {
+            if (comp.id !== componentId) return comp;
+            
+            let newRule = {};
+            if (comp.type === 'RANGE_WEIGHT') newRule = { min: 0, max: 10, price: 0 };
+            if (comp.type === 'TIER_VOLUME') newRule = { name: 'New Box', max_volume: 100, price: 0 };
+            if (comp.type === 'AMAZON_FBA') newRule = { tier_name: 'New Tier', max: 1, price: 0 };
+            if (comp.type === 'SHIPPING_ZONE') newRule = { zone: '1', min: 0, max: 50, price: 0 };
+
+            return { ...comp, rules: [...comp.rules, newRule] };
+        });
+        return { ...rc, components: updatedComponents };
+      }));
+  };
+
+    // Helper for deleting a rule row
+    const handleDeleteRule = (componentId: string, ruleIndex: number) => {
+        setRateCards(prevCards => prevCards.map(rc => {
+          if (rc.id !== selectedRateCardId) return rc;
+          const updatedComponents = rc.components.map(comp => {
+              if (comp.id !== componentId) return comp;
+              return { ...comp, rules: comp.rules.filter((_, idx) => idx !== ruleIndex) };
+          });
+          return { ...rc, components: updatedComponents };
+        }));
+    };
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-800 flex flex-col">
@@ -123,6 +210,10 @@ export default function App() {
                     <ConfigView 
                         rateCard={activeRateCard} 
                         onUpdateComponent={handleUpdateComponent} 
+                        onAddComponent={handleAddComponent}
+                        onDeleteComponent={handleDeleteComponent}
+                        onAddRule={handleAddRule}
+                        onDeleteRule={handleDeleteRule}
                     />
                 )}
                 {activeTab === 'simulate' && activeRateCard && (

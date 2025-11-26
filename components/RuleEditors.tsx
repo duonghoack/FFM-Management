@@ -111,3 +111,70 @@ export const FormulaEditor: React.FC<EditorProps> = ({ component, onUpdate }) =>
     </div>
   </div>
 );
+
+export const AmazonTierEditor: React.FC<EditorProps> = ({ component, onUpdate }) => (
+  <div className="mt-2 overflow-hidden rounded-md border border-slate-200">
+    <table className="w-full text-sm">
+      <thead className="bg-slate-50 text-slate-700 font-semibold">
+        <tr>
+          <th className="p-2 border-r border-slate-200 text-left">Amazon Size Tier</th>
+          <th className="p-2 border-r border-slate-200 text-left">Max Wt (lb)</th>
+          <th className="p-2 text-left">Price ($)</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-slate-100">
+        {component.rules.map((rule, idx) => (
+          <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
+            <td className="p-2 border-r border-slate-200 font-medium text-slate-700 text-xs">{rule.tier_name}</td>
+            <td className="p-2 border-r border-slate-200 text-center font-mono text-slate-600">{rule.max}</td>
+            <td className="p-2">
+              <input 
+                type="number" 
+                step="0.01"
+                className="w-full px-2 py-1 border border-slate-300 rounded bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                value={rule.price}
+                onChange={(e) => onUpdate('price', e.target.value, idx)}
+              />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+
+export const ShippingZoneEditor: React.FC<EditorProps> = ({ component, onUpdate }) => (
+  <div className="mt-2 overflow-hidden rounded-md border border-slate-200">
+    <table className="w-full text-sm">
+      <thead className="bg-slate-50 text-slate-700 font-semibold">
+        <tr>
+          <th className="p-2 border-r border-slate-200 text-left">Zone</th>
+          <th className="p-2 border-r border-slate-200 text-left">Min (lb)</th>
+          <th className="p-2 border-r border-slate-200 text-left">Max (lb)</th>
+          <th className="p-2 text-left">Price ($)</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-slate-100">
+        {component.rules.map((rule, idx) => (
+          <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
+            <td className="p-2 border-r border-slate-200 text-center font-bold text-slate-800 bg-slate-50">{rule.zone}</td>
+            <td className="p-2 border-r border-slate-200 text-center font-mono text-slate-600">{rule.min}</td>
+            <td className="p-2 border-r border-slate-200 text-center font-mono text-slate-600">{rule.max}</td>
+            <td className="p-2">
+              <input 
+                type="number" 
+                step="0.01"
+                className="w-full px-2 py-1 border border-slate-300 rounded bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                value={rule.price}
+                onChange={(e) => onUpdate('price', e.target.value, idx)}
+              />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <div className="p-2 bg-slate-50 text-xs text-slate-500 italic">
+        * Shipping rates are typically imported. This is a simplified editor for demo purposes.
+    </div>
+  </div>
+);
