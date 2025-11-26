@@ -1,0 +1,5 @@
+{
+  "name": "FFM Cost Engine",
+  "description": "A comprehensive Fulfillment Cost Management System to configure rate cards, manage complex pricing logic (weight ranges, volume tiers, formulas), and simulate order costs in real-time.",
+  "requestFramePermissions": []
+}
