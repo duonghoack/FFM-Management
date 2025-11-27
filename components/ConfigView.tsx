@@ -106,6 +106,22 @@ const ConfigView: React.FC<ConfigViewProps> = ({
                             <option value="PER_ITEM">Per Item</option>
                             <option value="PER_ORDER">Per Order</option>
                         </select>
+
+                        {/* Shipping Scope Selector */}
+                        {comp.type === 'SHIPPING_ZONE' && (
+                             <select 
+                                className={`appearance-none rounded-md py-1.5 px-3 font-medium cursor-pointer border focus:ring-2 focus:ring-offset-1 focus:outline-none transition-colors ${
+                                    comp.shipping_scope === 'INTERNATIONAL'
+                                    ? 'bg-orange-50 text-orange-700 border-orange-100 hover:bg-orange-100'
+                                    : 'bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100'
+                                }`}
+                                value={comp.shipping_scope || 'DOMESTIC'}
+                                onChange={(e) => onUpdateComponent(comp.id, null, 'shipping_scope', e.target.value)}
+                            >
+                                <option value="DOMESTIC">Domestic (US)</option>
+                                <option value="INTERNATIONAL">International</option>
+                            </select>
+                        )}
                     </div>
                   </div>
                 </div>

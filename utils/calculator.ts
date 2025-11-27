@@ -124,21 +124,42 @@ const calculateSingleCard = (rateCard: RateCard, orderItems: OrderItem[], zipcod
 
     // 6. LOGIC: SHIPPING_ZONE
     else if (comp.type === 'SHIPPING_ZONE') {
-        // Find rule matching Zone AND Weight
-        // We look for rule where zone matches (as string) and weight is within range
-        const rule = comp.rules.find(r => 
-            r.zone === zone.toString() && 
-            totalWeight > (r.min || 0) && 
-            totalWeight <= (r.max || 99999)
-        );
+        const model = comp.shipping_model || 'TABLE'; // Default to Table if undefined
 
-        if (rule && rule.price !== undefined) {
-            componentCost = rule.price;
-            explanation = `Zone ${zone} (Zip ${zipcode}), Weight ${totalWeight}lb -> Rate $${rule.price}`;
+        if (model === 'FIXED') {
+            // 6a. Flat Rate
+            componentCost = comp.price || 0;
+            explanation = `Flat Rate Shipping: $${componentCost.toFixed(2)}`;
+
+        } else if (model === 'FORMULA') {
+            // 6b. Formula: Base + (Weight - Threshold) * Increment
+            const base = comp.base_price || 0;
+            const threshold = comp.formula_threshold || 0;
+            const increment = comp.incremental_price || 0;
+            
+            let extraWeight = 0;
+            if (totalWeight > threshold) {
+                extraWeight = totalWeight - threshold;
+            }
+
+            componentCost = base + (extraWeight * increment);
+            explanation = `Formula: Base $${base} + (${extraWeight.toFixed(2)}lb excess x $${increment}) [Threshold: ${threshold}lb]`;
+
         } else {
-            // Check if there is a flat rate or fallback
-            componentCost = 0;
-            explanation = `No shipping rate found for Zone ${zone}, Weight ${totalWeight}lb`;
+            // 6c. Table / Zone Lookup (Default)
+            const rule = comp.rules.find(r => 
+                r.zone === zone.toString() && 
+                totalWeight > (r.min || 0) && 
+                totalWeight <= (r.max || 99999)
+            );
+    
+            if (rule && rule.price !== undefined) {
+                componentCost = rule.price;
+                explanation = `Zone ${zone} (Zip ${zipcode}), Weight ${totalWeight}lb -> Rate $${rule.price}`;
+            } else {
+                componentCost = 0;
+                explanation = `No shipping rate found for Zone ${zone}, Weight ${totalWeight}lb`;
+            }
         }
     }
 

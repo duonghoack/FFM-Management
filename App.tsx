@@ -73,8 +73,25 @@ export default function App() {
              } else if (newType === 'AMAZON_FBA') {
                  updatedComp.rules = [{ tier_name: 'Small Standard', max: 0.5, price: 0 }];
              } else if (newType === 'SHIPPING_ZONE') {
+                 // Default to Table logic
+                 updatedComp.shipping_model = 'TABLE'; 
                  updatedComp.rules = [{ zone: '1', min: 0, max: 99, price: 0 }];
              }
+          }
+
+          // SPECIAL LOGIC: If Shipping Model changes (inside SHIPPING_ZONE type)
+          if (field === 'shipping_model') {
+              if (value === 'TABLE' && (!updatedComp.rules || updatedComp.rules.length === 0)) {
+                  updatedComp.rules = [{ zone: '1', min: 0, max: 99, price: 0 }];
+              }
+              if (value === 'FIXED') {
+                  updatedComp.price = updatedComp.price || 0;
+              }
+              if (value === 'FORMULA') {
+                  updatedComp.base_price = updatedComp.base_price || 0;
+                  updatedComp.formula_threshold = updatedComp.formula_threshold || 0;
+                  updatedComp.incremental_price = updatedComp.incremental_price || 0;
+              }
           }
 
           return updatedComp;
@@ -174,7 +191,7 @@ export default function App() {
             <div className="col-span-12 md:col-span-4 lg:col-span-3">
                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sticky top-24">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Rate Cards</h3>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Fulfillment Providers</h3>
                         <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full text-slate-600">{rateCards.length}</span>
                     </div>
                     <div className="space-y-3">

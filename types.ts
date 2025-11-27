@@ -21,9 +21,12 @@ export interface Component {
   name: string;
   type: CalculationType;
   apply_level: ApplyLevel;
+  shipping_scope?: 'DOMESTIC' | 'INTERNATIONAL';
+  shipping_model?: 'TABLE' | 'FIXED' | 'FORMULA'; // New field for shipping calculation method
   unit?: string;
   price?: number; // For FIXED
   base_price?: number; // For FORMULA
+  formula_threshold?: number; // For Shipping Formula (e.g. start incrementing after X lbs)
   incremental_price?: number; // For FORMULA
   rules: Rule[];
 }

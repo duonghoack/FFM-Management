@@ -1,5 +1,6 @@
 import React from 'react';
 import { Component } from '../types';
+import { Table, LayoutList, Calculator } from 'lucide-react';
 
 interface EditorProps {
   component: Component;
@@ -143,38 +144,137 @@ export const AmazonTierEditor: React.FC<EditorProps> = ({ component, onUpdate })
   </div>
 );
 
-export const ShippingZoneEditor: React.FC<EditorProps> = ({ component, onUpdate }) => (
-  <div className="mt-2 overflow-hidden rounded-md border border-slate-200">
-    <table className="w-full text-sm">
-      <thead className="bg-slate-50 text-slate-700 font-semibold">
-        <tr>
-          <th className="p-2 border-r border-slate-200 text-left">Zone</th>
-          <th className="p-2 border-r border-slate-200 text-left">Min (lb)</th>
-          <th className="p-2 border-r border-slate-200 text-left">Max (lb)</th>
-          <th className="p-2 text-left">Price ($)</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-slate-100">
-        {component.rules.map((rule, idx) => (
-          <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
-            <td className="p-2 border-r border-slate-200 text-center font-bold text-slate-800 bg-slate-50">{rule.zone}</td>
-            <td className="p-2 border-r border-slate-200 text-center font-mono text-slate-600">{rule.min}</td>
-            <td className="p-2 border-r border-slate-200 text-center font-mono text-slate-600">{rule.max}</td>
-            <td className="p-2">
-              <input 
-                type="number" 
-                step="0.01"
-                className="w-full px-2 py-1 border border-slate-300 rounded bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                value={rule.price}
-                onChange={(e) => onUpdate('price', e.target.value, idx)}
-              />
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-    <div className="p-2 bg-slate-50 text-xs text-slate-500 italic">
-        * Shipping rates are typically imported. This is a simplified editor for demo purposes.
-    </div>
-  </div>
-);
+export const ShippingZoneEditor: React.FC<EditorProps> = ({ component, onUpdate }) => {
+    const model = component.shipping_model || 'TABLE';
+    const isInternational = component.shipping_scope === 'INTERNATIONAL';
+
+    return (
+        <div className="mt-2">
+            {/* Calculation Mode Selector */}
+            <div className="flex gap-1 mb-4 bg-slate-100 p-1 rounded-lg w-fit">
+                <button 
+                    onClick={() => onUpdate('shipping_model', 'TABLE')}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${model === 'TABLE' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:bg-slate-200'}`}
+                >
+                    <Table size={14} /> Zone Table
+                </button>
+                <button 
+                    onClick={() => onUpdate('shipping_model', 'FIXED')}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${model === 'FIXED' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:bg-slate-200'}`}
+                >
+                    <LayoutList size={14} /> Fixed / Flat
+                </button>
+                <button 
+                    onClick={() => onUpdate('shipping_model', 'FORMULA')}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${model === 'FORMULA' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:bg-slate-200'}`}
+                >
+                    <Calculator size={14} /> Weight Formula
+                </button>
+            </div>
+
+            {/* Render Logic based on Model */}
+            {model === 'TABLE' && (
+                 <div className="overflow-hidden rounded-md border border-slate-200">
+                    <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-slate-700 font-semibold">
+                        <tr>
+                        <th className="p-2 border-r border-slate-200 text-left w-32">
+                            {isInternational ? 'Country / Region' : 'Zone'}
+                        </th>
+                        <th className="p-2 border-r border-slate-200 text-left">Min (lb)</th>
+                        <th className="p-2 border-r border-slate-200 text-left">Max (lb)</th>
+                        <th className="p-2 text-left">Price ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {component.rules.map((rule, idx) => (
+                        <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
+                            <td className="p-2 border-r border-slate-200 text-center font-bold text-slate-800 bg-slate-50">
+                                <input 
+                                    className="w-full px-1 py-0.5 bg-transparent text-center border-b border-dashed border-slate-300 focus:border-blue-500 outline-none placeholder-slate-400" 
+                                    value={rule.zone || ''} 
+                                    onChange={(e) => onUpdate('zone', e.target.value, idx)}
+                                    placeholder={isInternational ? "e.g. CA, GB" : "e.g. 1, 8"}
+                                />
+                            </td>
+                            <td className="p-2 border-r border-slate-200 text-center font-mono text-slate-600">{rule.min}</td>
+                            <td className="p-2 border-r border-slate-200 text-center font-mono text-slate-600">{rule.max}</td>
+                            <td className="p-2">
+                            <input 
+                                type="number" 
+                                step="0.01"
+                                className="w-full px-2 py-1 border border-slate-300 rounded bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                                value={rule.price}
+                                onChange={(e) => onUpdate('price', e.target.value, idx)}
+                            />
+                            </td>
+                        </tr>
+                        ))}
+                    </tbody>
+                    </table>
+                    <div className="p-2 bg-slate-50 text-xs text-slate-500 italic">
+                        * Only matching Zones/Countries for the destination will be applied.
+                    </div>
+                </div>
+            )}
+
+            {model === 'FIXED' && (
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                     <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-slate-600">Flat Rate Shipping Cost ($):</span>
+                        <input 
+                        type="number" 
+                        step="0.01"
+                        className="border border-slate-300 rounded-md px-3 py-1.5 w-32 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                        value={component.price || 0}
+                        onChange={(e) => onUpdate('price', parseFloat(e.target.value))}
+                        />
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                        This price applies to all orders regardless of weight or destination zone.
+                    </p>
+                </div>
+            )}
+
+            {model === 'FORMULA' && (
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                     <p className="text-xs text-slate-500 mb-4 bg-blue-50 text-blue-700 p-2 rounded border border-blue-100">
+                         <strong>Logic:</strong> Price = Base Price + (Max(0, Order Weight - Threshold Weight) * Incremental Price)
+                     </p>
+                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Base Price ($)</label>
+                            <input 
+                                type="number" step="0.01"
+                                className="w-full px-3 py-1.5 border border-slate-300 rounded-md outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                                value={component.base_price || 0} 
+                                onChange={(e) => onUpdate('base_price', parseFloat(e.target.value))}
+                            />
+                            <p className="text-[10px] text-slate-400 mt-1">Cost for weight up to threshold</p>
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Threshold Weight (lb)</label>
+                            <input 
+                                type="number" step="0.1"
+                                className="w-full px-3 py-1.5 border border-slate-300 rounded-md outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                                value={component.formula_threshold || 0} 
+                                onChange={(e) => onUpdate('formula_threshold', parseFloat(e.target.value))}
+                            />
+                            <p className="text-[10px] text-slate-400 mt-1">Weight included in base price</p>
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Price per Extra lb ($)</label>
+                            <input 
+                                type="number" step="0.01"
+                                className="w-full px-3 py-1.5 border border-slate-300 rounded-md outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                                value={component.incremental_price || 0} 
+                                onChange={(e) => onUpdate('incremental_price', parseFloat(e.target.value))}
+                            />
+                            <p className="text-[10px] text-slate-400 mt-1">Applied to weight over threshold</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
